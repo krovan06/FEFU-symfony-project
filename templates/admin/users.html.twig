@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Управление пользователями{% endblock %}
+
+{% block body %}
+<h1>Управление пользователями</h1>
+
+{% for message in app.flashes('success') %}
+    <div style="color: green;">{{ message }}</div>
+{% endfor %}
+
+<form method="post">
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Пользователь</th>
+                <th>Администратор</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>
+                        <input type="checkbox" name="admins[]" value="{{ user.id }}"
+                            {% if 'ROLE_ADMIN' in user.roles %}checked{% endif %}
+                        >
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button type="submit">Сохранить изменения</button>
+</form>
+
+{% endblock %}

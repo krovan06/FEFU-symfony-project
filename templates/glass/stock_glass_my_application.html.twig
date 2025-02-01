@@ -1,0 +1,105 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Applications{% endblock %}
+
+{% block body %}
+  <link rel="stylesheet" href="{{ asset('css/styleMyApplication.css') }}"/>
+
+  <div id="app_bar">
+    <!-- Buttons for navigation -->
+    <button class="app_bar_button" onclick="window.location.href='{{ path('app_profile') }}'">Profile</button>
+    <div style="width: 1rem"></div>
+    <button class="app_bar_button" onclick="window.location.href='{{ path('app_stock_glass_view') }}'">Applications</button>
+  </div>
+
+  <div class="example-wrapper">
+    <h1 id="applications-header">All Applications</h1>
+
+    <!-- Form to create a new application -->
+    <div class="form-container" id="create-application-form">
+        <h1>Create Application</h1>
+        <form action="{{ path('app_application_new') }}" method="POST" id="application-form">
+            <button type="submit" id="submit-button" class="btn-submit">Create Application</button>
+        </form>
+    </div>
+
+    {% if applications is empty %}
+        <h2 id="no-applications-message">You don't have any applications</h2>
+    {% else %}
+        <div class="applications-list">
+            {% for app in applications %}
+                <div class="application" id="application-{{ app.id }}">
+                    <div class="app-details">
+                        <span class="stock-name" style="color:deeppink">{{ app.stock.name }}</span>
+                        <span class="action-status" style="color: {{ app.action == 'buy' ? 'green' : 'red' }}">
+                            {{ app.action == 'buy' ? 'Buy' : 'Sell' }}
+                        </span>
+                        <span class="application-details">
+                            Price: {{ app.price }} | Quantity: {{ app.quantity }} | Total: {{ app.quantity * app.price }}
+                        </span>
+                    </div>
+                    <div class="application-buttons">
+                        <button onclick="window.location.href='{{ path('app_application_edit', {'applicationId': app.id}) }}'" class="btn-edit">
+                            Edit
+                        </button>  
+                        <form method="POST" action="{{ path('app_stock_glass_delete_application', {'applicationId': app.id}) }}">
+                            <button type="submit" class="btn-delete">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+  </div>
+
+  <script>
+    // Function to update stock options based on selected portfolio and action
+    function updateStockOptions() {
+        const portfolioId = document.getElementById('portfolio').value;
+        const action = document.getElementById('action').value;
+        const stockSelect = document.getElementById('stock');
+        const actionSelect = document.getElementById('action');
+
+        // Clear existing stock options
+        stockSelect.innerHTML = '<option value="">Select Stock</option>';
+
+        if (action === 'buy') {
+            // Show all stocks available for buy
+            {% for stock in stocks %}
+                const option = document.createElement('option');
+                option.value = '{{ stock.id }}';
+                option.textContent = '{{ stock.name }}';
+                stockSelect.appendChild(option);
+            {% endfor %}
+        } else {
+            let stocksAvailable = false;
+
+            // For sell action, show only stocks from the selected portfolio's depository
+            {% for portfolio in portfolios %}
+                {% for depository in depositories %}
+                    {% if depository.portfolio.id == portfolio.id %}
+                        if (portfolioId == '{{ portfolio.id }}') {
+                            const option = document.createElement('option');
+                            option.value = '{{ depository.stock.id }}';
+                            option.textContent = '{{ depository.stock.name }}';
+                            stockSelect.appendChild(option);
+                            stocksAvailable = true;
+                        }
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+
+            // If no stocks available for sell, disable the sell option
+            if (!stocksAvailable) {
+                actionSelect.querySelector('option[value="sell"]').disabled = true;
+                actionSelect.value = 'buy'; // Set default action to 'buy' if no stocks available for sell
+            } else {
+                actionSelect.querySelector('option[value="sell"]').disabled = false;
+            }
+        }
+    }
+
+    // Call updateStockOptions on page load to set initial state
+    window.onload = updateStockOptions;
+  </script>
+{% endblock %}
